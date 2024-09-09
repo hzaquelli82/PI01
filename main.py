@@ -35,3 +35,18 @@ async def score_titulo(titulo_de_la_filmacion: str):
         return {'La película %s fue estrenada en el año %i, y tuvo una popularidad de %f' % (titulo_de_la_filmacion, result_year, result_popularity)}
     else:
         return {'No se encontró la película con el título "%s"' % titulo_de_la_filmacion}
+
+@app.get("/filmaciones_dia/{dia}")
+async def filmaciones_dia(dia: str):
+    '''
+    Esta función recibe como dato un día de la semana y devuelve 
+    la cantidad de estrenos de ese día.
+    
+    Parámetros:
+    dia (str): Día de la semana
+
+    Return:
+    string con la cantidad de películas'''
+    dia = pd.to_datetime(dia, format='%Y-%m-%d')
+    cantidad = (df['release_date'] == dia).sum()
+    return {'En el día %s, se estrenaron %s películas' % (dia.date(), cantidad)}
