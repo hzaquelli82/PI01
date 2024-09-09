@@ -39,11 +39,11 @@ async def score_titulo(titulo_de_la_filmacion: str):
 @app.get("/filmaciones_dia/{dia}")
 async def filmaciones_dia(dia: str):
     '''
-    Esta función recibe como dato un día de la semana y devuelve 
+    Esta función recibe como dato un día y devuelve 
     la cantidad de estrenos de ese día.
     
     Parámetros:
-    dia (str): Día de la semana
+    dia (str): Día en la forma AAAA-MM-DD
 
     Return:
     string con la cantidad de películas'''
