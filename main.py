@@ -9,14 +9,13 @@ df = pd.read_parquet('movies_datasets.parquet')
 async def score_titulo(titulo_de_la_filmacion: str):
     '''
     Esta función recibe como dato un título de película y devuelve título, año de estreno
-    y valoración.
+    y Popularidad.
     
     Parámetros:
     titulo_de_la_filmación (str): Título de la película.
-    df (DataFrame): DataFrame que contiene la información de las películas.
     
     Retorna:
-    None
+    str: Texto con el título de la pelicula, año de estreno y popularidad
     '''
     # Cambiamos el valor de titulo_de_la_filmación a lowercase para buscar
     titulo_de_la_filmacion = titulo_de_la_filmacion.lower()
@@ -50,3 +49,31 @@ async def filmaciones_dia(dia: str):
     dia = pd.to_datetime(dia, format='%Y-%m-%d')
     cantidad = (df['release_date'] == dia).sum()
     return {'En el día %s, se estrenaron %s películas' % (dia.date(), cantidad)}
+
+@app.get("/filamaciones_mes/{mes}")
+async def filmaciones_mes(mes: str):
+    '''Esta función recive el mes como parámetro y devuelve las 
+    filmaciones estrenadas a ese mes
+    
+    Parámetro:
+    mes (str): mes de la filmación. Puede ser 'Enero', 'Febrero', ..., 'Diciembre'
+
+    Retorna:
+    str: String con la cantidad de filmaciones estrenadas ese mes en todo el datasets
+    '''
+    mes_dic = {'enero':1,
+               'febrero':2,
+               'marzo':3,
+               'abril':4,
+               'mayo':5,
+               'junio':6,
+               'julio':7,
+               'agosto':8,
+               'septiembre':9,
+               'octubre':10,
+               'noviembre':11,
+               'diciembre':12}
+    mes = mes.lower()
+    cantidad_mes = (df['release_month'] == mes_dic[mes]).sum()
+    mes = mes.capitalize()
+    return {'%i peliculas se estrenaron en %s' % (cantidad_mes, mes)}
