@@ -5,6 +5,7 @@ app = FastAPI()
 
 df = pd.read_parquet('movies_datasets.parquet')
 
+#Funcion para obtener datos de título, año de estreno y popularidad de una pelicula
 @app.get("/score_titulo/{titulo_de_la_filmacion}")
 async def score_titulo(titulo_de_la_filmacion: str):
     '''
@@ -27,14 +28,15 @@ async def score_titulo(titulo_de_la_filmacion: str):
         # Obtenemos el año de estreno y la popularidad de la película
         result_year = int(fila_pelicula['release_year'].values[0])
         result_popularity = fila_pelicula['popularity'].values[0]
-        titulo_de_la_filmacion = titulo_de_la_filmacion.title()
-
-        
+        # Volvemos a cambiar el valor de titulo_de_la_filmación a title case para devolverlo
+        titulo_de_la_filmacion = titulo_de_la_filmacion.title()        
         # Imprimimos la información de la película
         return {'La película %s fue estrenada en el año %i, y tuvo una popularidad de %f' % (titulo_de_la_filmacion, result_year, result_popularity)}
     else:
         return {'No se encontró la película con el título "%s"' % titulo_de_la_filmacion}
 
+
+#Función para obtener la cantidad de películas estrenadas en una fecha
 @app.get("/filmaciones_dia/{dia}")
 async def filmaciones_dia(dia: str):
     '''
@@ -46,10 +48,16 @@ async def filmaciones_dia(dia: str):
 
     Return:
     string con la cantidad de películas'''
+    
+    #Convertimos el valor dado en formato AAAA-MM-DD a datetime
     dia = pd.to_datetime(dia, format='%Y-%m-%d')
+
+    #Guardamos la cantidad de películas en la variable cantidad
     cantidad = (df['release_date'] == dia).sum()
     return {'En el día %s, se estrenaron %s películas' % (dia.date(), cantidad)}
 
+
+#Función para obtener la cantidad de películas estrenadas en un mes dado
 @app.get("/filamaciones_mes/{mes}")
 async def filmaciones_mes(mes: str):
     '''Esta función recive el mes como parámetro y devuelve las 
@@ -61,6 +69,8 @@ async def filmaciones_mes(mes: str):
     Retorna:
     str: String con la cantidad de filmaciones estrenadas ese mes en todo el datasets
     '''
+
+    #Diccionario con los meses del año
     mes_dic = {'enero':1,
                'febrero':2,
                'marzo':3,
@@ -73,7 +83,49 @@ async def filmaciones_mes(mes: str):
                'octubre':10,
                'noviembre':11,
                'diciembre':12}
+    
+    #Cambiamos nombre del mes a minúsculas
     mes = mes.lower()
+    #Guardamos la cantidad encotrada en la variable cantidad
     cantidad_mes = (df['release_month'] == mes_dic[mes]).sum()
     mes = mes.capitalize()
     return {'%i peliculas se estrenaron en %s' % (cantidad_mes, mes)}
+
+
+#Función para obtener votaciones de películas
+@app.get("/votaciones/{titulo_de_la_filmacion}")
+async def votos_titulo(titulo_de_la_filmacion: str):
+    '''Esta función recibe el título de una película y devuelve 
+    la cantidad de votos que tiene y la valoración promedio
+    en el dataset, siempre que tenga al menos 2000 votos.
+    Si no existe la película, devuelve un mensaje de error
+    
+    Parámetro:
+    titulo_de_la_filmacion (str): Título de la película
+
+    Retorna:
+    str: String con titulo, cantidad de votos y  valoración promedio
+    '''
+
+    #Transformamos el título a minusculas
+    titulo_de_la_filmacion = titulo_de_la_filmacion.lower()
+
+    #Generamos máscaras para filtrar el dataframe
+    mask1 = df['title'] == titulo_de_la_filmacion
+    mask2 = df['vote_count'] > 1999
+
+    #Generamos la lista de índices que coinciden con las máscaras
+    lista = df[mask1 & mask2].index.tolist()
+
+    #Proceso de selección y resultados
+    if not len(lista) == 0:
+        for indice in lista:
+            votos = int(df.loc[indice,'vote_count'])
+            año_estreno = df.loc[indice,'release_year']
+            votacion = df.loc[indice,'vote_average']
+            return {f'La pelicula {titulo_de_la_filmacion} fue estrenada en el {año_estreno}.La misma cuenta con un total de {votos} valoraciones, con un promedio de {votacion}'}
+    elif titulo_de_la_filmacion in df['title'].values:
+        return {'La película posee menos de 2000 valoraciones'}
+    else:
+        return {'La película no existe en la base de datos'}
+
