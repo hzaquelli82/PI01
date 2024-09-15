@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 import pandas as pd
+import unicodedata
 
 app = FastAPI()
 
@@ -40,21 +41,35 @@ async def score_titulo(titulo_de_la_filmacion: str):
 @app.get("/filmaciones_dia/{dia}")
 async def filmaciones_dia(dia: str):
     '''
-    Esta función recibe como dato un día y devuelve 
-    la cantidad de estrenos de ese día.
+    Esta función recibe como dato un día de la semana, escrito en español y 
+    devuelve la cantidad de peliculas estrenadas ese día en todo el dataset
     
     Parámetros:
-    dia (str): Día en la forma AAAA-MM-DD
+    dia (str): Día de la semana en español
 
     Return:
-    string con la cantidad de películas'''
+    str: string con la cantidad de películas'''
     
-    #Convertimos el valor dado en formato AAAA-MM-DD a datetime
-    dia = pd.to_datetime(dia, format='%Y-%m-%d')
+    #COnvertir dia a lower case
+    dia = dia.lower()
 
-    #Guardamos la cantidad de películas en la variable cantidad
-    cantidad = (df['release_date'] == dia).sum()
-    return {'En el día %s, se estrenaron %s películas' % (dia.date(), cantidad)}
+    #Eliminar caracteres no deseados
+    dia = unicodedata.normalize('NFD', dia).encode('ascii', 'ignore').decode('utf-8')
+
+    #USar un diccionario para relacionar el día de la semana en español a inglés
+    dia_ingles = {
+        'lunes': 'Monday',
+        'martes': 'Tuesday',
+        'miercoles': 'Wednesday',
+        'jueves': 'Thursday',
+        'viernes': 'Friday',
+        'sabado': 'Saturday',
+        'domingo': 'Sunday'
+    }
+
+    #Guardo la cantidad de películas en la variable cantidad
+    cantidad_dia = (df['release_day'] == dia_ingles[dia]).sum()
+    return {'%s cantidad de películas fueron estrenadas en los días %s' % (cantidad_dia, dia.capitalize())}
 
 
 #Función para obtener la cantidad de películas estrenadas en un mes dado
