@@ -147,7 +147,6 @@ async def votos_titulo(titulo_de_la_filmacion: str):
     else:
         return {'La película no existe en la base de datos'}
 
-import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 

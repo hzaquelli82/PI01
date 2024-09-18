@@ -2,3 +2,4 @@
 .vscode
 datasets/credits.csv
 credits.json
+data.pkl
