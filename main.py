@@ -2,12 +2,15 @@ from fastapi import FastAPI
 import pandas as pd
 import unicodedata
 import numpy as np
-
+import ast
 
 app = FastAPI()
 
 df = pd.read_parquet('movies_datasets.parquet')
 ml =  pd.read_parquet('ml.parquet')
+df_actor = pd.read_csv('actores.csv')
+df_dire_id = df.pivot_table(index='director', values='id', aggfunc=lambda x: list(x)).reset_index()
+
 
 #Funcion para obtener datos de título, año de estreno y popularidad de una pelicula
 @app.get("/score_titulo/{titulo_de_la_filmacion}")
@@ -38,6 +41,7 @@ async def score_titulo(titulo_de_la_filmacion: str):
         return {'La película %s fue estrenada en el año %i, y tuvo una popularidad de %f' % (titulo_de_la_filmacion, result_year, result_popularity)}
     else:
         return {'No se encontró la película con el título "%s"' % titulo_de_la_filmacion}
+
 
 
 #Función para obtener la cantidad de películas estrenadas en una fecha
@@ -75,6 +79,7 @@ async def filmaciones_dia(dia: str):
     return {'%s cantidad de películas fueron estrenadas en los días %s' % (cantidad_dia, dia.capitalize())}
 
 
+
 #Función para obtener la cantidad de películas estrenadas en un mes dado
 @app.get("/filamaciones_mes/{mes}")
 async def filmaciones_mes(mes: str):
@@ -110,6 +115,7 @@ async def filmaciones_mes(mes: str):
     return {'%i peliculas se estrenaron en %s' % (cantidad_mes, mes)}
 
 
+
 #Función para obtener votaciones de películas
 @app.get("/votaciones/{titulo_de_la_filmacion}")
 async def votos_titulo(titulo_de_la_filmacion: str):
@@ -141,11 +147,60 @@ async def votos_titulo(titulo_de_la_filmacion: str):
             votos = int(df.loc[indice,'vote_count'])
             año_estreno = df.loc[indice,'release_year']
             votacion = df.loc[indice,'vote_average']
-            return {f'La pelicula {titulo_de_la_filmacion} fue estrenada en el {año_estreno}.La misma cuenta con un total de {votos} valoraciones, con un promedio de {votacion}'}
+            return {f'La pelicula {titulo_de_la_filmacion.capitalize()} fue estrenada en el {año_estreno}.La misma cuenta con un total de {votos} valoraciones, con un promedio de {votacion}'}
     elif titulo_de_la_filmacion in df['title'].values:
         return {'La película posee menos de 2000 valoraciones'}
     else:
         return {'La película no existe en la base de datos'}
+
+
+#Función para obtener datos de actor 
+@app.get("/get_actor/{nombre}")
+async def get_actor(nombre: str):
+    
+    #Pasamos a minusculas el nombre del actor
+    nombre =  nombre.lower()
+    
+    #Contamos la cantidad de peliculas en que participó
+    cant_peli = df_actor['id'][df_actor['actores'] ==  nombre].apply(len)
+
+    #Lista de id de peliculas
+    list_pelis  = ast.literal_eval(df_actor['id'][df_actor['actores'] ==  nombre].values[0])
+
+    # Filtro el DataFrame de retornos para obtener los retornos de las películas del actor elegido
+    retornos_actor = df[df['id'].isin(list_pelis)]
+
+    # Sumar los retornos del actor elegido
+    suma_retornos_actor = retornos_actor['return'].sum()
+
+
+    #Promedio de retorno
+    media_return  = suma_retornos_actor / cant_peli
+
+    return {'El actor %s ha participado de %i filmaciones, el mismo ha conseguido un retorno de %f con un promedio de %F por filmación' % (nombre.capitalize(),  int(cant_peli.iloc[0]), suma_retornos_actor, media_return)}
+
+
+
+#Función para obtener datos de Director
+@app.get('/get_director/{nombre}')
+async def get_director(nombre: str):
+    
+    #Pasamos el nombre a minúsculas
+    nombre = nombre.lower()
+
+    #Lista de id de peliculas
+    list_pelis  = list(df_dire_id['id'][df_dire_id['director'] ==  nombre].values[0])
+
+    #Lista de retornos
+    retornos_dire = df[df['id'].isin(list_pelis)]
+
+    # Sumar los retornos del actor elegido
+    suma_retornos_dire = retornos_dire['return'].sum()
+
+    data_film = retornos_dire[['title','release_date','budget','return']]
+    data_film = data_film.to_string(col_space=1, index=False)
+
+    return {'El director %s tuvo un retorno total de %f.' % (nombre.title(),  suma_retornos_dire)+' Sus peliculas fueron'+data_film}
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
