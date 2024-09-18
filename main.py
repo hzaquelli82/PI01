@@ -162,7 +162,7 @@ similarity_matrix = cosine_similarity(tfidf_matrix)
 
 #Funcion de recomendacion
 @app.get('/recomendador/{titulo}')
-def recomendador(titulo: str):
+async def recomendador(titulo: str):
 
     #Poner titulo en minúsculas
     titulo = titulo.lower()
