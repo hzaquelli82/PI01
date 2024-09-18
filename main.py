@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 import pandas as pd
 import unicodedata
+import numpy as np
+
 
 app = FastAPI()
 
 df = pd.read_parquet('movies_datasets.parquet')
+ml =  pd.read_parquet('ml.parquet')
 
 #Funcion para obtener datos de título, año de estreno y popularidad de una pelicula
 @app.get("/score_titulo/{titulo_de_la_filmacion}")
@@ -144,3 +147,37 @@ async def votos_titulo(titulo_de_la_filmacion: str):
     else:
         return {'La película no existe en la base de datos'}
 
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Crea un vectorizador TF-IDF
+vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1, 2))
+
+# Ajusta el vectorizador a la columna 'overview' y transforma los datos
+tfidf_matrix = vectorizer.fit_transform(ml['features'])
+
+# Calcula la similitud coseno entre los vectores
+similarity_matrix = cosine_similarity(tfidf_matrix)
+
+#Funcion de recomendacion
+@app.get('/recomendador/{titulo}')
+def recomendador(titulo: str):
+
+    #Poner titulo en minúsculas
+    titulo = titulo.lower()
+    # Obtener el id de la película
+    movie_id =  ml.loc[ml['title'] == titulo, 'id'].values[0]
+    # Obtiene el índice de la película en la matriz de similitud
+    idx = np.where(ml['id'] == movie_id)[0][0]
+    
+    # Obtiene las puntuaciones de similitud para la película
+    scores = list(enumerate(similarity_matrix[idx]))
+    
+    # Ordena las puntuaciones en orden descendente
+    scores.sort(key=lambda x: x[1], reverse=True)
+    
+    # Obtiene las películas similares
+    similar_movies = [ml.iloc[i,1] for i, _ in scores[1:6]]
+    
+    return similar_movies
