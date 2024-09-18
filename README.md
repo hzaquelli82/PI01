@@ -28,3 +28,32 @@ El endpoint _get_director(nombre: str):_ recibe como parámetro el nombre y apel
 
 #### 7. Por último el recomendador
 Este endpoint tien la función de recomendación de peliculas, recibe como parámetro una pelicula y devuelve 5 títluos de pelicula similares.
+
+### Configuración
+Para ejecutar este proyecto localmente, sigue los siguientes pasos:
+
+### Requisitos
+Python 3.8+
+Entorno virtual (recomendado)
+FastAPI
+Pandas
+Uvicorn (para ejecutar la API)
+
+### Instalación
+1. Clona el repositorio
+2. Navega hasta el directorio del proyecto
+3. Crea un entorno virtual (opcional pero recomendado)
+4. Activa el entorno virtual
+5. Instala las dependencias requeridas (ver requerimentsPC.txt) pip install -r requirementsPC.txt
+6. Ejecuta los jupyter notebook en el siguinete orden:
+    1º el ETL.ipynb
+    2º el EDA.ipynb
+    3º el ML.ipynb
+7. Luego podrás ejecutar el archivo main.py desde una terminal o consola
+8. Ejecuta: uvicorn main:app --reload. La API estará disponible en http://127.0.0.1:8000.
+
+### Conjunto de Datos
+La API utiliza archivos CSV relacionados con películas y actores. Asegúrate de que los archivos de datos estén ubicados en el directorio datasets/. Algunos ejemplos de archivos de datos incluyen:
+
+
+
